@@ -30,7 +30,7 @@ public class RegiaoDao {
         return "Regiao cadastrada com sucesso!";
     }
 
-    public String atualizar(Regiao regiao) throws SQLException {
+    public int atualizar(Regiao regiao) throws SQLException {
         PreparedStatement stmt = minhaConexao.prepareStatement(
             "update tb_regiao set nm_reg = ?, dt_cadastro = ?, fk_usuario_id_usu = ?, " +
             "fk_subprefeitura_id_subpref = ? where id_reg = ?"
@@ -40,19 +40,19 @@ public class RegiaoDao {
         stmt.setInt(3, regiao.getFkUsuarioIdUsu());
         stmt.setInt(4, regiao.getFkSubprefeituraIdSubpref());
         stmt.setInt(5, regiao.getIdReg());
-        stmt.executeUpdate();
+        int linhasAfetadas = stmt.executeUpdate();
         stmt.close();
-        return "Regiao atualizada com sucesso!";
+        return linhasAfetadas;
     }
 
-    public String deletar(int id) throws SQLException {
+    public int deletar(int id) throws SQLException {
         PreparedStatement stmt = minhaConexao.prepareStatement(
             "delete from tb_regiao where id_reg = ?"
         );
         stmt.setInt(1, id);
-        stmt.execute();
+        int linhasAfetadas = stmt.executeUpdate();
         stmt.close();
-        return "Regiao removida com sucesso!";
+        return linhasAfetadas;
     }
 
     public List<Regiao> selecionar() throws SQLException {

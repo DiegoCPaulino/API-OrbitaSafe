@@ -31,15 +31,15 @@ public class NotificacaoDao {
         return "Notificacao registrada com sucesso!";
     }
 
-    public String atualizar(Notificacao notificacao) throws SQLException {
+    public int atualizar(Notificacao notificacao) throws SQLException {
         PreparedStatement stmt = minhaConexao.prepareStatement(
             "update tb_notificacao set estado_notif = ? where id_notif = ?"
         );
         stmt.setString(1, notificacao.getEstadoNotif());
         stmt.setInt(2, notificacao.getIdNotif());
-        stmt.executeUpdate();
+        int linhasAfetadas = stmt.executeUpdate();
         stmt.close();
-        return "Notificacao atualizada com sucesso!";
+        return linhasAfetadas;
     }
 
     public List<Notificacao> selecionarPorUsuario(int idUsuario) throws SQLException {
