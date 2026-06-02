@@ -24,10 +24,7 @@ public class IaServiceReal implements IaService {
         }
 
         Gson gson = new Gson();
-        // =====================================================================
-        // CONTRATO 1 — o Map é serializado diretamente. Quando a equipe de IA
-        // fechar o formato do endpoint, ajustar as chaves em AnaliseRiscoBo.
-        // =====================================================================
+        // Contrato 1 — Map serializado direto; ajustar chaves em AnaliseRiscoBo quando o formato fechar.
         String json = gson.toJson(variaveis);
 
         HttpPost request = new HttpPost(iaUrl);
