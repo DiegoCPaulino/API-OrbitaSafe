@@ -31,7 +31,7 @@ public class UsuarioDao {
         return "Usuario cadastrado com sucesso!";
     }
 
-    public String atualizar(Usuario usuario) throws SQLException {
+    public int atualizar(Usuario usuario) throws SQLException {
         PreparedStatement stmt = minhaConexao.prepareStatement(
             "update tb_usuario set nm_usu = ?, email_usu = ?, senha_usu = ?, tp_usu = ?, dt_cadastro = ? " +
             "where id_usu = ?"
@@ -42,19 +42,19 @@ public class UsuarioDao {
         stmt.setString(4, usuario.getTpUsu());
         stmt.setDate(5, Date.valueOf(usuario.getDtCadastro()));
         stmt.setInt(6, usuario.getIdUsu());
-        stmt.executeUpdate();
+        int linhasAfetadas = stmt.executeUpdate();
         stmt.close();
-        return "Usuario atualizado com sucesso!";
+        return linhasAfetadas;
     }
 
-    public String deletar(int id) throws SQLException {
+    public int deletar(int id) throws SQLException {
         PreparedStatement stmt = minhaConexao.prepareStatement(
             "delete from tb_usuario where id_usu = ?"
         );
         stmt.setInt(1, id);
-        stmt.execute();
+        int linhasAfetadas = stmt.executeUpdate();
         stmt.close();
-        return "Usuario removido com sucesso!";
+        return linhasAfetadas;
     }
 
     public List<Usuario> selecionar() throws SQLException {
