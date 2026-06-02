@@ -1,9 +1,6 @@
 package br.com.fiap.orbitasafe.services;
 
-// =====================================================================
-// AJUSTAR ESTE POJO QUANDO A EQUIPE DE IA DEFINIR O FORMATO REAL DA RESPOSTA.
-// Campos atuais são uma suposição razoável baseada no Documento Base.
-// =====================================================================
+// Ajustar este POJO quando a equipe de IA definir o formato real da resposta.
 
 // Campos em snake_case para refletir a resposta JSON da API Flask (padrão das aulas).
 public class RespostaIa {
