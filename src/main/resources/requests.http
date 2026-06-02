@@ -1,0 +1,164 @@
+### Variáveis
+@host = http://localhost:8080
+
+### ════════════════════════════════════
+### AUTH
+### ════════════════════════════════════
+
+### 1. Cadastro de usuário
+POST {{host}}/auth/cadastro
+Content-Type: application/json
+
+{
+  "idUsu": 100,
+  "nmUsu": "Teste API",
+  "emailUsu": "teste@orbitasafe.com",
+  "senhaUsu": "senha123",
+  "tpUsu": "USER",
+  "dtCadastro": "2026-05-29"
+}
+
+### 2. Login (retorna DTO sem senha)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "emailUsu": "teste@orbitasafe.com",
+  "senhaUsu": "senha123"
+}
+
+### 2b. Login com credenciais inválidas — esperado: 401
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "emailUsu": "teste@orbitasafe.com",
+  "senhaUsu": "errada"
+}
+
+### ════════════════════════════════════
+### USUÁRIOS
+### ════════════════════════════════════
+
+### 3. Listar todos os usuários (sem senha)
+GET {{host}}/usuarios
+
+### 4. Buscar usuário por id
+GET {{host}}/usuarios/1
+
+### 4b. Buscar usuário inexistente — esperado: 404
+GET {{host}}/usuarios/9999
+
+### 5. Atualizar usuário
+PUT {{host}}/usuarios/100
+Content-Type: application/json
+
+{
+  "nmUsu": "Teste API Atualizado",
+  "emailUsu": "teste@orbitasafe.com",
+  "tpUsu": "USER"
+}
+
+### 6. Deletar usuário
+DELETE {{host}}/usuarios/100
+
+### ════════════════════════════════════
+### REGIÕES
+### ════════════════════════════════════
+
+### 7. Cadastrar região (dispara 1ª análise automática)
+POST {{host}}/regioes
+Content-Type: application/json
+
+{
+  "idReg": 200,
+  "nmReg": "Centro via API",
+  "dtCadastro": "2026-05-29",
+  "fkUsuarioIdUsu": 1,
+  "fkSubprefeituraIdSubpref": 1
+}
+
+### 8. Listar todas as regiões
+GET {{host}}/regioes
+
+### 9. Buscar região por id
+GET {{host}}/regioes/1
+
+### 10. Atualizar região
+PUT {{host}}/regioes/200
+Content-Type: application/json
+
+{
+  "nmReg": "Centro Atualizado",
+  "dtCadastro": "2026-05-29",
+  "fkUsuarioIdUsu": 1,
+  "fkSubprefeituraIdSubpref": 1
+}
+
+### 11. Deletar região
+DELETE {{host}}/regioes/200
+
+### 12. Disparar análise de risco sob demanda (botão atualizar)
+POST {{host}}/regioes/1/analisar
+
+### 13. Listar regiões de um usuário
+GET {{host}}/usuarios/1/regioes
+
+### ════════════════════════════════════
+### ALERTAS
+### ════════════════════════════════════
+
+### 14. Histórico de alertas de uma região
+GET {{host}}/regioes/1/alertas
+
+### ════════════════════════════════════
+### NOTIFICAÇÕES
+### ════════════════════════════════════
+
+### 15. Todas as notificações de um usuário
+GET {{host}}/usuarios/1/notificacoes
+
+### 16. Apenas notificações não lidas
+GET {{host}}/usuarios/1/notificacoes/nao-lidas
+
+### 17. Marcar notificação como lida
+PUT {{host}}/notificacoes/1/marcar-lida
+
+### ════════════════════════════════════
+### SUBPREFEITURAS
+### ════════════════════════════════════
+
+### 18. Listar as 32 subprefeituras de São Paulo
+GET {{host}}/subprefeituras
+
+### 19. Buscar subprefeitura por id
+GET {{host}}/subprefeituras/1
+
+### 20. Marcar notificação inexistente como lida (deve retornar 404)
+PUT {{host}}/notificacoes/99999/marcar-lida
+
+### 21. Atualizar usuário inexistente (deve retornar 404)
+PUT {{host}}/usuarios/99999
+Content-Type: application/json
+
+{
+  "nmUsu": "Inexistente",
+  "emailUsu": "x@y.com",
+  "tpUsu": "USER"
+}
+
+### 22. Deletar usuário inexistente (deve retornar 404)
+DELETE {{host}}/usuarios/99999
+
+### 23. Atualizar região inexistente (deve retornar 404)
+PUT {{host}}/regioes/99999
+Content-Type: application/json
+
+{
+  "nmReg": "Inexistente",
+  "fkUsuarioIdUsu": 1,
+  "fkSubprefeituraIdSubpref": 1
+}
+
+### 24. Deletar região inexistente (deve retornar 404)
+DELETE {{host}}/regioes/99999
