@@ -2,6 +2,7 @@ package br.com.fiap.orbitasafe.bo;
 
 import br.com.fiap.orbitasafe.dao.*;
 import br.com.fiap.orbitasafe.entities.*;
+import br.com.fiap.orbitasafe.exceptions.RegistroNaoEncontradoException;
 import br.com.fiap.orbitasafe.services.*;
 
 import java.time.LocalDate;
@@ -15,18 +16,15 @@ public class AnaliseRiscoBo {
     private static final int JANELA_PRECIPITACAO_HORAS = 24;
 
     public Alerta analisar(int idRegiao) throws Exception {
-        // 1. Buscar região
         RegiaoDao regiaoDao = new RegiaoDao();
         Regiao regiao = regiaoDao.buscarPorId(idRegiao);
         if (regiao == null) {
-            throw new RuntimeException("Regiao nao encontrada: id=" + idRegiao);
+            throw new RegistroNaoEncontradoException("Regiao nao encontrada: id=" + idRegiao);
         }
 
-        // 2. Buscar subprefeitura (para o código estável usado pela IA)
         SubprefeituraDao subprefDao = new SubprefeituraDao();
         Subprefeitura subpref = subprefDao.buscarPorId(regiao.getFkSubprefeituraIdSubpref());
 
-        // 3. Obter dados climáticos; se falhar, faz fallback automático para fonte simulada
         ServicoClima servico = ServicoClimaFactory.criar();
         DadosClimaticos dados;
         try {
@@ -43,7 +41,6 @@ public class AnaliseRiscoBo {
         int idAlerta  = (int)((base + 1) % 9_000_000) + 1_000_000;
         int idNotif   = (int)((base + 2) % 9_000_000) + 1_000_000;
 
-        // 5. Gravar leitura climática
         LeituraClimatica leitura = new LeituraClimatica();
         leitura.setIdLeitura(idLeitura);
         double precAtual = dados.getPrecipitacaoHoraria().length > 0 ? dados.getPrecipitacaoHoraria()[0] : 0.0;
@@ -58,7 +55,6 @@ public class AnaliseRiscoBo {
         leitura.setFkRegiaoIdReg(idRegiao);
         new LeituraClimaticaDao().inserir(leitura);
 
-        // 6. Montar as 8 variáveis do Contrato 1 e chamar a IA
         int cdSubpref = (subpref != null) ? subpref.getCdSubpref() : 0;
         Map<String, Object> variaveis = montarVariaveisIa(dados, cdSubpref);
 
@@ -83,7 +79,6 @@ public class AnaliseRiscoBo {
         alerta.setFkLeituraIdLeitura(idLeitura);
         new AlertaDao().inserir(alerta);
 
-        // 8. Associar todos os modelos de IA ativos ao alerta
         List<ModeloIa> modelos = new ModeloIaDao().selecionar();
         AlertaModeloDao alertaModeloDao = new AlertaModeloDao();
         for (ModeloIa modelo : modelos) {
@@ -120,20 +115,15 @@ public class AnaliseRiscoBo {
 
         Map<String, Object> variaveis = new HashMap<String, Object>();
 
-        // =====================================================================
-        // CONTRATO 1 — INVIOLÁVEL
-        // As 8 chaves abaixo refletem a Seção 7.2 do Documento Base.
-        // QUANDO A EQUIPE DE IA FECHAR OS NOMES REAIS DA API FLASK, AJUSTAR
-        // AS CHAVES DESTE MAP — É O ÚNICO PONTO DE MUDANÇA NECESSÁRIO.
-        // =====================================================================
+        // Contrato com a API de IA — ajustar chaves quando o formato for fechado
         variaveis.put("precipitacao",           precipAcumulada);
-        variaveis.put("umidade_relativa",        dados.getUmidadeRelativa());
-        variaveis.put("pressao_atmosferica",     dados.getPressao());
-        variaveis.put("velocidade_vento",        dados.getVelocidadeVento());
+        variaveis.put("umidade",        dados.getUmidadeRelativa());
+        variaveis.put("pressao",     dados.getPressao());
+        variaveis.put("vento",        dados.getVelocidadeVento());
         variaveis.put("temperatura",             dados.getTemperatura());
         variaveis.put("umidade_solo",            dados.getUmidadeSolo());
         variaveis.put("mes",                     LocalDate.now().getMonthValue());
-        variaveis.put("codigo_subprefeitura",    cdSubpref);
+        variaveis.put("cod_subprefeitura",    cdSubpref);
 
         return variaveis;
     }
