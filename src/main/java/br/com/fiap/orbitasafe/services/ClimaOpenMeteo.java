@@ -70,6 +70,13 @@ public class ClimaOpenMeteo implements ServicoClima {
             }
         }
 
+        if (resp.hourly.temperature_2m == null || resp.hourly.relative_humidity_2m == null
+                || resp.hourly.pressure_msl == null || resp.hourly.wind_speed_10m == null
+                || resp.hourly.soil_moisture_0_to_1cm == null || resp.hourly.precipitation == null
+                || indice >= resp.hourly.temperature_2m.length) {
+            throw new RuntimeException("Resposta da Open-Meteo incompleta (arrays horarios ausentes).");
+        }
+
         DadosClimaticos dados = new DadosClimaticos();
         dados.setTemperatura(resp.hourly.temperature_2m[indice]);
         dados.setUmidadeRelativa(resp.hourly.relative_humidity_2m[indice]);

@@ -35,15 +35,17 @@ public class AnaliseRiscoBo {
             dados = new ClimaSimulado().obterDados(regiao);
         }
 
-        // 4. Gerar IDs únicos para esta análise (banco sem SEQUENCE)
-        long base = System.currentTimeMillis();
-        int idLeitura = (int)(base % 9_000_000) + 1_000_000;
-        int idAlerta  = (int)((base + 1) % 9_000_000) + 1_000_000;
-        int idNotif   = (int)((base + 2) % 9_000_000) + 1_000_000;
+        // Gera IDs únicos para esta análise (banco sem SEQUENCE)
+        long baseTimestamp = System.currentTimeMillis();
+        int idLeitura = (int)(baseTimestamp % 9_000_000) + 1_000_000;
+        int idAlerta  = (int)((baseTimestamp + 1) % 9_000_000) + 1_000_000;
+        int idNotif   = (int)((baseTimestamp + 2) % 9_000_000) + 1_000_000;
 
         LeituraClimatica leitura = new LeituraClimatica();
         leitura.setIdLeitura(idLeitura);
-        double precAtual = dados.getPrecipitacaoHoraria().length > 0 ? dados.getPrecipitacaoHoraria()[0] : 0.0;
+        // leitura registra a precip. da hora atual; a IA recebe o acumulo de 6h (montarVariaveisIa)
+        double[] precHoraria = dados.getPrecipitacaoHoraria();
+        double precAtual = (precHoraria != null && precHoraria.length > 0) ? precHoraria[0] : 0.0;
         leitura.setPrecipitacaoLeitura(precAtual);
         leitura.setUmidadeLeitura(dados.getUmidadeRelativa());
         leitura.setPressaoLeitura(dados.getPressao());
@@ -66,7 +68,7 @@ public class AnaliseRiscoBo {
             throw new RuntimeException("Falha ao chamar o servico de IA: " + e.getMessage(), e);
         }
 
-        // 7. Criar e gravar Alerta (sempre, mesmo risco BAIXO)
+        // Criar e gravar Alerta (sempre, mesmo risco BAIXO)
         // Flask devolve "Baixo"/"Medio"/"Alto"; normaliza para o padrao do banco (BAIXO/MEDIO/ALTO)
         String nivel = respostaIa.getRisco_geral().toUpperCase();
         Alerta alerta = new Alerta();
@@ -90,7 +92,7 @@ public class AnaliseRiscoBo {
             alertaModeloDao.inserir(am);
         }
 
-        // 9. Criar notificação APENAS para risco MEDIO ou ALTO
+        // Criar notificação APENAS para risco MEDIO ou ALTO
         if ("MEDIO".equals(nivel) || "ALTO".equals(nivel)) {
             Notificacao notif = new Notificacao();
             notif.setIdNotif(idNotif);
@@ -106,10 +108,9 @@ public class AnaliseRiscoBo {
     }
 
     private Map<String, Object> montarVariaveisIa(DadosClimaticos dados, int cdSubpref) {
-        // Soma de precipitação na janela de horas configurada
         double[] precHoraria = dados.getPrecipitacaoHoraria();
         double precipAcumulada = 0.0;
-        int limite = Math.min(JANELA_PRECIPITACAO_HORAS, precHoraria.length);
+        int limite = (precHoraria != null) ? Math.min(JANELA_PRECIPITACAO_HORAS, precHoraria.length) : 0;
         for (int i = 0; i < limite; i++) {
             precipAcumulada += precHoraria[i];
         }
