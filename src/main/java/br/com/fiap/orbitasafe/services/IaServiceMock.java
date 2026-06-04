@@ -8,23 +8,24 @@ public class IaServiceMock implements IaService {
 
     @Override
     public RespostaIa avaliarRisco(Map<String, Object> variaveis) throws Exception {
-        double precipitacao   = ((Number) variaveis.get("precipitacao")).doubleValue();
-        double velocidadeVento = ((Number) variaveis.get("velocidade_vento")).doubleValue();
+        double precipitacao = ((Number) variaveis.get("precipitacao_6h")).doubleValue();
+        double vento        = ((Number) variaveis.get("vento")).doubleValue();
 
         RespostaIa resposta = new RespostaIa();
 
-        if (precipitacao > 30 || velocidadeVento > 50) {
-            resposta.setNivel_risco("ALTO");
-            resposta.setProbabilidade(0.85);
-        } else if (precipitacao > 10 || velocidadeVento > 25) {
-            resposta.setNivel_risco("MEDIO");
-            resposta.setProbabilidade(0.60);
+        // Mesma grafia capitalizada da Flask real ("Baixo"/"Medio"/"Alto")
+        if (precipitacao > 30 || vento > 50) {
+            resposta.setRisco_geral("Alto");
+            resposta.setScore_alagamento(0.85);
+        } else if (precipitacao > 10 || vento > 25) {
+            resposta.setRisco_geral("Medio");
+            resposta.setScore_alagamento(0.60);
         } else {
-            resposta.setNivel_risco("BAIXO");
-            resposta.setProbabilidade(0.20);
+            resposta.setRisco_geral("Baixo");
+            resposta.setScore_alagamento(0.20);
         }
 
-        resposta.setPrecipitacao_prevista(precipitacao * 1.2);
+        resposta.setStatus("sucesso");
         return resposta;
     }
 }

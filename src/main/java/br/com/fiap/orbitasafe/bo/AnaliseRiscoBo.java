@@ -12,8 +12,8 @@ import java.util.Map;
 
 public class AnaliseRiscoBo {
 
-    // Janela de horas usada para somar precipitação acumulada (Contrato 1, variável "precipitacao").
-    private static final int JANELA_PRECIPITACAO_HORAS = 24;
+    // Janela de horas para somar precipitação acumulada — a Flask espera "precipitacao_6h" (acúmulo de 6h).
+    private static final int JANELA_PRECIPITACAO_HORAS = 6;
 
     public Alerta analisar(int idRegiao) throws Exception {
         RegiaoDao regiaoDao = new RegiaoDao();
@@ -67,13 +67,14 @@ public class AnaliseRiscoBo {
         }
 
         // 7. Criar e gravar Alerta (sempre, mesmo risco BAIXO)
+        // Flask devolve "Baixo"/"Medio"/"Alto"; normaliza para o padrao do banco (BAIXO/MEDIO/ALTO)
+        String nivel = respostaIa.getRisco_geral().toUpperCase();
         Alerta alerta = new Alerta();
         alerta.setIdAlerta(idAlerta);
-        alerta.setNivelAlerta(respostaIa.getNivel_risco());
+        alerta.setNivelAlerta(nivel);
         alerta.setTpEvento("Analise Automatica");
-        alerta.setDsAlerta("Risco " + respostaIa.getNivel_risco() +
-                " — probabilidade: " + respostaIa.getProbabilidade() +
-                " — precipitacao prevista: " + respostaIa.getPrecipitacao_prevista() + "mm");
+        alerta.setDsAlerta("Risco " + nivel +
+                " — score de alagamento: " + respostaIa.getScore_alagamento());
         alerta.setDtAlerta(LocalDate.now());
         alerta.setFkRegiaoIdReg(idRegiao);
         alerta.setFkLeituraIdLeitura(idLeitura);
@@ -85,15 +86,15 @@ public class AnaliseRiscoBo {
             AlertaModelo am = new AlertaModelo();
             am.setFkAlertaIdAlerta(idAlerta);
             am.setFkModeloIdModelo(modelo.getIdModelo());
-            am.setScoreModelo(respostaIa.getProbabilidade());
+            am.setScoreModelo(respostaIa.getScore_alagamento());
             alertaModeloDao.inserir(am);
         }
 
         // 9. Criar notificação APENAS para risco MEDIO ou ALTO
-        if ("MEDIO".equals(respostaIa.getNivel_risco()) || "ALTO".equals(respostaIa.getNivel_risco())) {
+        if ("MEDIO".equals(nivel) || "ALTO".equals(nivel)) {
             Notificacao notif = new Notificacao();
             notif.setIdNotif(idNotif);
-            notif.setDsNotif("Alerta " + respostaIa.getNivel_risco() + " na regiao: " + regiao.getNmReg());
+            notif.setDsNotif("Alerta " + nivel + " na regiao: " + regiao.getNmReg());
             notif.setDtNotif(LocalDate.now());
             notif.setEstadoNotif("NAO_LIDA");
             notif.setFkUsuarioIdUsu(regiao.getFkUsuarioIdUsu());
@@ -115,15 +116,15 @@ public class AnaliseRiscoBo {
 
         Map<String, Object> variaveis = new HashMap<String, Object>();
 
-        // Contrato com a API de IA — ajustar chaves quando o formato for fechado
-        variaveis.put("precipitacao",           precipAcumulada);
-        variaveis.put("umidade",        dados.getUmidadeRelativa());
-        variaveis.put("pressao",     dados.getPressao());
-        variaveis.put("vento",        dados.getVelocidadeVento());
-        variaveis.put("temperatura",             dados.getTemperatura());
-        variaveis.put("umidade_solo",            dados.getUmidadeSolo());
-        variaveis.put("mes",                     LocalDate.now().getMonthValue());
-        variaveis.put("cod_subprefeitura",    cdSubpref);
+        // Nomes exatos esperados pelo endpoint POST /predict da Flask
+        variaveis.put("precipitacao_6h", precipAcumulada);
+        variaveis.put("umidade",         dados.getUmidadeRelativa());
+        variaveis.put("pressao",         dados.getPressao());
+        variaveis.put("vento",           dados.getVelocidadeVento());
+        variaveis.put("temperatura",     dados.getTemperatura());
+        variaveis.put("umidade_solo",    dados.getUmidadeSolo());
+        variaveis.put("mes",             LocalDate.now().getMonthValue());
+        variaveis.put("subpref_cod",     cdSubpref);
 
         return variaveis;
     }

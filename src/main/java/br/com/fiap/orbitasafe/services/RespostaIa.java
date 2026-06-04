@@ -1,36 +1,35 @@
 package br.com.fiap.orbitasafe.services;
 
-// Ajustar este POJO quando a equipe de IA definir o formato real da resposta.
-
-// Campos em snake_case para refletir a resposta JSON da API Flask (padrão das aulas).
+// Espelha a resposta JSON do endpoint POST /predict da API Flask.
+// Campos em snake_case para refletir o JSON da Flask (padrão das aulas).
 public class RespostaIa {
 
-    private String nivel_risco;          // "BAIXO", "MEDIO" ou "ALTO"
-    private double probabilidade;        // 0.0 a 1.0
-    private double precipitacao_prevista; // mm (modelo de regressão)
+    private String risco_geral;        // "Baixo", "Medio" ou "Alto"
+    private double score_alagamento;   // 0.0 a 1.0
+    private String status;             // "sucesso" ou "erro"
 
     public RespostaIa() {}
 
-    public RespostaIa(String nivel_risco, double probabilidade, double precipitacao_prevista) {
-        this.nivel_risco           = nivel_risco;
-        this.probabilidade         = probabilidade;
-        this.precipitacao_prevista = precipitacao_prevista;
+    public RespostaIa(String risco_geral, double score_alagamento, String status) {
+        this.risco_geral      = risco_geral;
+        this.score_alagamento = score_alagamento;
+        this.status           = status;
     }
 
-    public String getNivel_risco() { return nivel_risco; }
-    public void setNivel_risco(String nivel_risco) { this.nivel_risco = nivel_risco; }
+    public String getRisco_geral() { return risco_geral; }
+    public void setRisco_geral(String risco_geral) { this.risco_geral = risco_geral; }
 
-    public double getProbabilidade() { return probabilidade; }
-    public void setProbabilidade(double probabilidade) { this.probabilidade = probabilidade; }
+    public double getScore_alagamento() { return score_alagamento; }
+    public void setScore_alagamento(double score_alagamento) { this.score_alagamento = score_alagamento; }
 
-    public double getPrecipitacao_prevista() { return precipitacao_prevista; }
-    public void setPrecipitacao_prevista(double precipitacao_prevista) { this.precipitacao_prevista = precipitacao_prevista; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     @Override
     public String toString() {
         return "RespostaIa" +
-                "\nnivel_risco='" + nivel_risco + '\'' +
-                "\nprobabilidade=" + probabilidade +
-                "\nprecipitacao_prevista=" + precipitacao_prevista;
+                "\nrisco_geral='" + risco_geral + '\'' +
+                "\nscore_alagamento=" + score_alagamento +
+                "\nstatus='" + status + '\'';
     }
 }
