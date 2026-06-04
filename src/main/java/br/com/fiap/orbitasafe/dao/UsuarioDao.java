@@ -9,6 +9,7 @@ import java.util.List;
 
 public class UsuarioDao {
 
+    // Conexao aberta/fechada por metodo: em servidor de vida longa, manter no atributo vazaria sessoes Oracle (ORA-02391).
     public String inserir(Usuario usuario) throws SQLException, ClassNotFoundException {
         Connection conexao = new ConexaoFactory().conexao();
         PreparedStatement stmt = null;
