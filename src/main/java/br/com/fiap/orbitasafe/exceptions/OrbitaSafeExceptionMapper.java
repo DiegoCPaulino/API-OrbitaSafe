@@ -26,6 +26,8 @@ public class OrbitaSafeExceptionMapper implements ExceptionMapper<RuntimeExcepti
             return Response.status(400)
                     .entity(Map.of("erro", e.getMessage())).build();
         }
+        System.err.println("=== Erro nao tratado capturado pelo ExceptionMapper ===");
+        e.printStackTrace();
         return Response.status(500)
                 .entity(Map.of("erro", "Erro interno no servidor")).build();
     }
