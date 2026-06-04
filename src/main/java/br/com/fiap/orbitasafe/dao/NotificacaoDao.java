@@ -9,66 +9,88 @@ import java.util.List;
 
 public class NotificacaoDao {
 
-    public Connection minhaConexao;
-
-    public NotificacaoDao() throws SQLException, ClassNotFoundException {
-        this.minhaConexao = new ConexaoFactory().conexao();
-    }
-
-    public String inserir(Notificacao notificacao) throws SQLException {
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "insert into tb_notificacao (id_notif, ds_notif, dt_notif, estado_notif, fk_usuario_id_usu, fk_alerta_id_alerta) " +
-            "values (?, ?, ?, ?, ?, ?)"
-        );
-        stmt.setInt(1, notificacao.getIdNotif());
-        stmt.setString(2, notificacao.getDsNotif());
-        stmt.setDate(3, Date.valueOf(notificacao.getDtNotif()));
-        stmt.setString(4, notificacao.getEstadoNotif());
-        stmt.setInt(5, notificacao.getFkUsuarioIdUsu());
-        stmt.setInt(6, notificacao.getFkAlertaIdAlerta());
-        stmt.execute();
-        stmt.close();
-        return "Notificacao registrada com sucesso!";
-    }
-
-    public int atualizar(Notificacao notificacao) throws SQLException {
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "update tb_notificacao set estado_notif = ? where id_notif = ?"
-        );
-        stmt.setString(1, notificacao.getEstadoNotif());
-        stmt.setInt(2, notificacao.getIdNotif());
-        int linhasAfetadas = stmt.executeUpdate();
-        stmt.close();
-        return linhasAfetadas;
-    }
-
-    public List<Notificacao> selecionarPorUsuario(int idUsuario) throws SQLException {
-        List<Notificacao> lista = new ArrayList<Notificacao>();
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "select * from tb_notificacao where fk_usuario_id_usu = ? order by dt_notif desc"
-        );
-        stmt.setInt(1, idUsuario);
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            lista.add(mapear(rs));
+    public String inserir(Notificacao notificacao) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        try {
+            stmt = conexao.prepareStatement(
+                "insert into tb_notificacao (id_notif, ds_notif, dt_notif, estado_notif, fk_usuario_id_usu, fk_alerta_id_alerta) " +
+                "values (?, ?, ?, ?, ?, ?)"
+            );
+            stmt.setInt(1, notificacao.getIdNotif());
+            stmt.setString(2, notificacao.getDsNotif());
+            stmt.setDate(3, Date.valueOf(notificacao.getDtNotif()));
+            stmt.setString(4, notificacao.getEstadoNotif());
+            stmt.setInt(5, notificacao.getFkUsuarioIdUsu());
+            stmt.setInt(6, notificacao.getFkAlertaIdAlerta());
+            stmt.execute();
+            return "Notificacao registrada com sucesso!";
+        } finally {
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return lista;
     }
 
-    public List<Notificacao> selecionarNaoLidasPorUsuario(int idUsuario) throws SQLException {
-        List<Notificacao> lista = new ArrayList<Notificacao>();
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "select * from tb_notificacao where fk_usuario_id_usu = ? and estado_notif = 'NAO_LIDA' " +
-            "order by dt_notif desc"
-        );
-        stmt.setInt(1, idUsuario);
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            lista.add(mapear(rs));
+    public int atualizar(Notificacao notificacao) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        try {
+            stmt = conexao.prepareStatement(
+                "update tb_notificacao set estado_notif = ? where id_notif = ?"
+            );
+            stmt.setString(1, notificacao.getEstadoNotif());
+            stmt.setInt(2, notificacao.getIdNotif());
+            int linhasAfetadas = stmt.executeUpdate();
+            return linhasAfetadas;
+        } finally {
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return lista;
+    }
+
+    public List<Notificacao> selecionarPorUsuario(int idUsuario) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            List<Notificacao> lista = new ArrayList<Notificacao>();
+            stmt = conexao.prepareStatement(
+                "select * from tb_notificacao where fk_usuario_id_usu = ? order by dt_notif desc"
+            );
+            stmt.setInt(1, idUsuario);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+            return lista;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
+        }
+    }
+
+    public List<Notificacao> selecionarNaoLidasPorUsuario(int idUsuario) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            List<Notificacao> lista = new ArrayList<Notificacao>();
+            stmt = conexao.prepareStatement(
+                "select * from tb_notificacao where fk_usuario_id_usu = ? and estado_notif = 'NAO_LIDA' " +
+                "order by dt_notif desc"
+            );
+            stmt.setInt(1, idUsuario);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+            return lista;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
+        }
     }
 
     private Notificacao mapear(ResultSet rs) throws SQLException {

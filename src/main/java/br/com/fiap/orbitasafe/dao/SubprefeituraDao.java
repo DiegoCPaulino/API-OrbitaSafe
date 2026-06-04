@@ -9,38 +9,47 @@ import java.util.List;
 
 public class SubprefeituraDao {
 
-    public Connection minhaConexao;
-
-    public SubprefeituraDao() throws SQLException, ClassNotFoundException {
-        this.minhaConexao = new ConexaoFactory().conexao();
-    }
-
-    public List<Subprefeitura> selecionar() throws SQLException {
-        List<Subprefeitura> lista = new ArrayList<Subprefeitura>();
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "select * from tb_subprefeitura order by nm_subpref"
-        );
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            lista.add(mapear(rs));
+    public List<Subprefeitura> selecionar() throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            List<Subprefeitura> lista = new ArrayList<Subprefeitura>();
+            stmt = conexao.prepareStatement(
+                "select * from tb_subprefeitura order by nm_subpref"
+            );
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+            return lista;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return lista;
     }
 
-    public Subprefeitura buscarPorId(int id) throws SQLException {
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "select * from tb_subprefeitura where id_subpref = ?"
-        );
-        stmt.setInt(1, id);
-        ResultSet rs = stmt.executeQuery();
-        if (rs.next()) {
-            Subprefeitura s = mapear(rs);
-            stmt.close();
+    public Subprefeitura buscarPorId(int id) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = conexao.prepareStatement(
+                "select * from tb_subprefeitura where id_subpref = ?"
+            );
+            stmt.setInt(1, id);
+            rs = stmt.executeQuery();
+            Subprefeitura s = null;
+            if (rs.next()) {
+                s = mapear(rs);
+            }
             return s;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return null;
     }
 
     private Subprefeitura mapear(ResultSet rs) throws SQLException {

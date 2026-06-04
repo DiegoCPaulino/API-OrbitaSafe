@@ -9,61 +9,76 @@ import java.util.List;
 
 public class LeituraClimaticaDao {
 
-    public Connection minhaConexao;
-
-    public LeituraClimaticaDao() throws SQLException, ClassNotFoundException {
-        this.minhaConexao = new ConexaoFactory().conexao();
+    public String inserir(LeituraClimatica leitura) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        try {
+            stmt = conexao.prepareStatement(
+                "insert into tb_leitura_climatica " +
+                "(id_leitura, precipitacao_leitura, umidade_leitura, pressao_leitura, vento_leitura, " +
+                "temperatura_leitura, umid_solo_leitura, dt_leitura, dia_previsao, fk_regiao_id_reg) " +
+                "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+            stmt.setInt(1, leitura.getIdLeitura());
+            stmt.setDouble(2, leitura.getPrecipitacaoLeitura());
+            stmt.setDouble(3, leitura.getUmidadeLeitura());
+            stmt.setDouble(4, leitura.getPressaoLeitura());
+            stmt.setDouble(5, leitura.getVentoLeitura());
+            stmt.setDouble(6, leitura.getTemperaturaLeitura());
+            stmt.setDouble(7, leitura.getUmidSoloLeitura());
+            stmt.setDate(8, Date.valueOf(leitura.getDtLeitura()));
+            stmt.setInt(9, leitura.getDiaPrevisao());
+            stmt.setInt(10, leitura.getFkRegiaoIdReg());
+            stmt.execute();
+            return "Leitura climatica registrada com sucesso!";
+        } finally {
+            if (stmt != null) stmt.close();
+            conexao.close();
+        }
     }
 
-    public String inserir(LeituraClimatica leitura) throws SQLException {
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "insert into tb_leitura_climatica " +
-            "(id_leitura, precipitacao_leitura, umidade_leitura, pressao_leitura, vento_leitura, " +
-            "temperatura_leitura, umid_solo_leitura, dt_leitura, dia_previsao, fk_regiao_id_reg) " +
-            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        );
-        stmt.setInt(1, leitura.getIdLeitura());
-        stmt.setDouble(2, leitura.getPrecipitacaoLeitura());
-        stmt.setDouble(3, leitura.getUmidadeLeitura());
-        stmt.setDouble(4, leitura.getPressaoLeitura());
-        stmt.setDouble(5, leitura.getVentoLeitura());
-        stmt.setDouble(6, leitura.getTemperaturaLeitura());
-        stmt.setDouble(7, leitura.getUmidSoloLeitura());
-        stmt.setDate(8, Date.valueOf(leitura.getDtLeitura()));
-        stmt.setInt(9, leitura.getDiaPrevisao());
-        stmt.setInt(10, leitura.getFkRegiaoIdReg());
-        stmt.execute();
-        stmt.close();
-        return "Leitura climatica registrada com sucesso!";
-    }
-
-    public LeituraClimatica buscarPorId(int id) throws SQLException {
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "select * from tb_leitura_climatica where id_leitura = ?"
-        );
-        stmt.setInt(1, id);
-        ResultSet rs = stmt.executeQuery();
-        if (rs.next()) {
-            LeituraClimatica l = mapear(rs);
-            stmt.close();
+    public LeituraClimatica buscarPorId(int id) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = conexao.prepareStatement(
+                "select * from tb_leitura_climatica where id_leitura = ?"
+            );
+            stmt.setInt(1, id);
+            rs = stmt.executeQuery();
+            LeituraClimatica l = null;
+            if (rs.next()) {
+                l = mapear(rs);
+            }
             return l;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return null;
     }
 
-    public List<LeituraClimatica> selecionarPorRegiao(int idRegiao) throws SQLException {
-        List<LeituraClimatica> lista = new ArrayList<LeituraClimatica>();
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "select * from tb_leitura_climatica where fk_regiao_id_reg = ? order by dt_leitura desc"
-        );
-        stmt.setInt(1, idRegiao);
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            lista.add(mapear(rs));
+    public List<LeituraClimatica> selecionarPorRegiao(int idRegiao) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            List<LeituraClimatica> lista = new ArrayList<LeituraClimatica>();
+            stmt = conexao.prepareStatement(
+                "select * from tb_leitura_climatica where fk_regiao_id_reg = ? order by dt_leitura desc"
+            );
+            stmt.setInt(1, idRegiao);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+            return lista;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return lista;
     }
 
     private LeituraClimatica mapear(ResultSet rs) throws SQLException {

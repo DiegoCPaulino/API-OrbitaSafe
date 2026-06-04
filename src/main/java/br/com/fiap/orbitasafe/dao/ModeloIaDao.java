@@ -9,36 +9,45 @@ import java.util.List;
 
 public class ModeloIaDao {
 
-    public Connection minhaConexao;
-
-    public ModeloIaDao() throws SQLException, ClassNotFoundException {
-        this.minhaConexao = new ConexaoFactory().conexao();
-    }
-
-    public List<ModeloIa> selecionar() throws SQLException {
-        List<ModeloIa> lista = new ArrayList<ModeloIa>();
-        PreparedStatement stmt = minhaConexao.prepareStatement("select * from tb_modelo_ia");
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            lista.add(mapear(rs));
+    public List<ModeloIa> selecionar() throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            List<ModeloIa> lista = new ArrayList<ModeloIa>();
+            stmt = conexao.prepareStatement("select * from tb_modelo_ia");
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+            return lista;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return lista;
     }
 
-    public ModeloIa buscarPorId(int id) throws SQLException {
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "select * from tb_modelo_ia where id_modelo = ?"
-        );
-        stmt.setInt(1, id);
-        ResultSet rs = stmt.executeQuery();
-        if (rs.next()) {
-            ModeloIa m = mapear(rs);
-            stmt.close();
+    public ModeloIa buscarPorId(int id) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = conexao.prepareStatement(
+                "select * from tb_modelo_ia where id_modelo = ?"
+            );
+            stmt.setInt(1, id);
+            rs = stmt.executeQuery();
+            ModeloIa m = null;
+            if (rs.next()) {
+                m = mapear(rs);
+            }
             return m;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return null;
     }
 
     private ModeloIa mapear(ResultSet rs) throws SQLException {

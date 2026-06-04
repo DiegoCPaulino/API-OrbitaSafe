@@ -9,36 +9,45 @@ import java.util.List;
 
 public class CenarioClimaticoDao {
 
-    public Connection minhaConexao;
-
-    public CenarioClimaticoDao() throws SQLException, ClassNotFoundException {
-        this.minhaConexao = new ConexaoFactory().conexao();
-    }
-
-    public List<CenarioClimatico> selecionar() throws SQLException {
-        List<CenarioClimatico> lista = new ArrayList<CenarioClimatico>();
-        PreparedStatement stmt = minhaConexao.prepareStatement("select * from tb_cenario_climatico");
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            lista.add(mapear(rs));
+    public List<CenarioClimatico> selecionar() throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            List<CenarioClimatico> lista = new ArrayList<CenarioClimatico>();
+            stmt = conexao.prepareStatement("select * from tb_cenario_climatico");
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+            return lista;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return lista;
     }
 
-    public CenarioClimatico buscarPorId(int id) throws SQLException {
-        PreparedStatement stmt = minhaConexao.prepareStatement(
-            "select * from tb_cenario_climatico where id_cenario = ?"
-        );
-        stmt.setInt(1, id);
-        ResultSet rs = stmt.executeQuery();
-        if (rs.next()) {
-            CenarioClimatico c = mapear(rs);
-            stmt.close();
+    public CenarioClimatico buscarPorId(int id) throws SQLException, ClassNotFoundException {
+        Connection conexao = new ConexaoFactory().conexao();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = conexao.prepareStatement(
+                "select * from tb_cenario_climatico where id_cenario = ?"
+            );
+            stmt.setInt(1, id);
+            rs = stmt.executeQuery();
+            CenarioClimatico c = null;
+            if (rs.next()) {
+                c = mapear(rs);
+            }
             return c;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            conexao.close();
         }
-        stmt.close();
-        return null;
     }
 
     private CenarioClimatico mapear(ResultSet rs) throws SQLException {
