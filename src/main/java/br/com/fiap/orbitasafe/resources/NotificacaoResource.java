@@ -8,27 +8,14 @@ import jakarta.ws.rs.core.*;
 
 import java.sql.SQLException;
 
-@Path("/")
+// Listagens por usuario migraram para UsuarioResource; aqui resta o PUT de marcar como lida.
+@Path("/notificacoes")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class NotificacaoResource {
 
-    @GET
-    @Path("/usuarios/{id}/notificacoes")
-    public Response listarPorUsuario(@PathParam("id") int id)
-            throws SQLException, ClassNotFoundException {
-        return Response.ok(new NotificacaoDao().selecionarPorUsuario(id)).build();
-    }
-
-    @GET
-    @Path("/usuarios/{id}/notificacoes/nao-lidas")
-    public Response listarNaoLidasPorUsuario(@PathParam("id") int id)
-            throws SQLException, ClassNotFoundException {
-        return Response.ok(new NotificacaoDao().selecionarNaoLidasPorUsuario(id)).build();
-    }
-
     @PUT
-    @Path("/notificacoes/{id}/marcar-lida")
+    @Path("/{id}/marcar-lida")
     public Response marcarLida(@PathParam("id") int id)
             throws SQLException, ClassNotFoundException {
         Notificacao n = new Notificacao();

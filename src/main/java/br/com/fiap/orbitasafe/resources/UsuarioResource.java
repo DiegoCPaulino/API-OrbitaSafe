@@ -1,6 +1,8 @@
 package br.com.fiap.orbitasafe.resources;
 
+import br.com.fiap.orbitasafe.bo.RegiaoBo;
 import br.com.fiap.orbitasafe.bo.UsuarioBo;
+import br.com.fiap.orbitasafe.dao.NotificacaoDao;
 import br.com.fiap.orbitasafe.dto.UsuarioRespostaDto;
 import br.com.fiap.orbitasafe.entities.Usuario;
 import br.com.fiap.orbitasafe.exceptions.RegistroNaoEncontradoException;
@@ -17,6 +19,7 @@ import java.util.List;
 public class UsuarioResource {
 
     private UsuarioBo usuarioBo = new UsuarioBo();
+    private RegiaoBo regiaoBo = new RegiaoBo();
 
     @GET
     public Response listar() throws SQLException, ClassNotFoundException {
@@ -37,6 +40,38 @@ public class UsuarioResource {
             throw new RegistroNaoEncontradoException("Usuario nao encontrado: id=" + id);
         }
         return Response.ok(UsuarioRespostaDto.de(u)).build();
+    }
+
+    // Sub-recursos de usuario (regioes, notificacoes) ficam aqui para evitar ambiguidade de @Path entre Resources.
+
+    @GET
+    @Path("/{id}/regioes")
+    public Response listarRegioes(@PathParam("id") int id)
+            throws SQLException, ClassNotFoundException {
+        if (usuarioBo.buscarPorId(id) == null) {
+            throw new RegistroNaoEncontradoException("Usuario nao encontrado: id=" + id);
+        }
+        return Response.ok(regiaoBo.listarPorUsuario(id)).build();
+    }
+
+    @GET
+    @Path("/{id}/notificacoes")
+    public Response listarNotificacoes(@PathParam("id") int id)
+            throws SQLException, ClassNotFoundException {
+        if (usuarioBo.buscarPorId(id) == null) {
+            throw new RegistroNaoEncontradoException("Usuario nao encontrado: id=" + id);
+        }
+        return Response.ok(new NotificacaoDao().selecionarPorUsuario(id)).build();
+    }
+
+    @GET
+    @Path("/{id}/notificacoes/nao-lidas")
+    public Response listarNotificacoesNaoLidas(@PathParam("id") int id)
+            throws SQLException, ClassNotFoundException {
+        if (usuarioBo.buscarPorId(id) == null) {
+            throw new RegistroNaoEncontradoException("Usuario nao encontrado: id=" + id);
+        }
+        return Response.ok(new NotificacaoDao().selecionarNaoLidasPorUsuario(id)).build();
     }
 
     @PUT
