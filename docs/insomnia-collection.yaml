@@ -1,0 +1,495 @@
+type: collection.insomnia.rest/5.0
+name: OrbitaSafe API
+meta:
+  id: wrk_orbitasafe
+  created: 1717000000000
+  modified: 1717000000000
+  description: "Coleção de testes da API OrbitaSafe (Quarkus + Oracle). API stateless (sem JWT). Use o environment Local. O login alimenta usuarioLogadoId via response chaining."
+collection:
+  - name: 1. Autenticação
+    meta:
+      id: fld_auth
+      created: 1717000000000
+      modified: 1717000000000
+      sortKey: -1000
+      description: "Cadastro e login. O login preenche usuarioLogadoId/usuarioLogadoEmail automaticamente."
+    children:
+      - url: "{{ _.baseUrl }}/auth/cadastro"
+        name: POST Cadastrar usuário
+        meta:
+          id: req_auth_cadastro
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -1000
+          description: "PK manual: idUsu vai no body. tpUsu não é validado no back (texto livre). Retorna 201 + Location."
+        method: POST
+        headers:
+          - name: Content-Type
+            value: application/json
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "idUsu": 100,
+              "nmUsu": "Ana Souza",
+              "emailUsu": "{{ _.emailTeste }}",
+              "senhaUsu": "{{ _.senhaTeste }}",
+              "tpUsu": "USER",
+              "dtCadastro": "2026-06-04"
+            }
+      - url: "{{ _.baseUrl }}/auth/login"
+        name: POST Login
+        meta:
+          id: req_auth_login
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -900
+          description: "Retorna o usuário sem senha. Alimenta usuarioLogadoId ($.idUsu) e usuarioLogadoEmail ($.emailUsu) por response chaining."
+        method: POST
+        headers:
+          - name: Content-Type
+            value: application/json
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "emailUsu": "{{ _.emailTeste }}",
+              "senhaUsu": "{{ _.senhaTeste }}"
+            }
+  - name: 2. Usuários
+    meta:
+      id: fld_usuarios
+      created: 1717000000000
+      modified: 1717000000000
+      sortKey: -900
+      description: "CRUD de usuários. GET nunca retorna senha (UsuarioRespostaDto)."
+    children:
+      - url: "{{ _.baseUrl }}/usuarios"
+        name: GET Listar todos
+        meta:
+          id: req_usu_listar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -1000
+          description: "Lista todos os usuários (sem campo de senha)."
+        method: GET
+      - url: "{{ _.baseUrl }}/usuarios/{{ _.usuarioLogadoId }}"
+        name: GET Buscar usuário logado
+        meta:
+          id: req_usu_buscar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -900
+          description: "Usa o id obtido no login. Retorna 404 se não existir."
+        method: GET
+      - url: "{{ _.baseUrl }}/usuarios/{{ _.usuarioLogadoId }}"
+        name: PUT Atualizar usuário logado
+        meta:
+          id: req_usu_atualizar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -800
+          description: "Senha é opcional: se omitida, a senha atual é mantida. dtCadastro omitida é preservada."
+        method: PUT
+        headers:
+          - name: Content-Type
+            value: application/json
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "nmUsu": "Ana Souza (atualizada)",
+              "emailUsu": "{{ _.emailTeste }}",
+              "tpUsu": "USER"
+            }
+      - url: "{{ _.baseUrl }}/usuarios/{{ _.usuarioLogadoId }}"
+        name: DELETE Apagar usuário logado
+        meta:
+          id: req_usu_deletar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -700
+          description: "Pode falhar com 500 se usuário tiver regiões — apague regiões primeiro. Retorna 204; 404 se id inexistente."
+        method: DELETE
+  - name: 3. Regiões
+    meta:
+      id: fld_regioes
+      created: 1717000000000
+      modified: 1717000000000
+      sortKey: -800
+      description: "CRUD de regiões + análise de risco. Cadastrar dispara a 1ª análise automaticamente."
+    children:
+      - url: "{{ _.baseUrl }}/regioes"
+        name: GET Listar todas
+        meta:
+          id: req_reg_listar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -1000
+          description: "Lista todas as regiões cadastradas."
+        method: GET
+      - url: "{{ _.baseUrl }}/regioes"
+        name: POST Criar região
+        meta:
+          id: req_reg_criar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -900
+          description: "PK manual: idReg no body. Cadastrar dispara a 1ª análise automática (clima → IA → alerta). Alimenta regiaoCriadaId ($.idReg)."
+        method: POST
+        headers:
+          - name: Content-Type
+            value: application/json
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "idReg": 200,
+              "nmReg": "Centro - Casa da Ana",
+              "dtCadastro": "2026-06-04",
+              "fkUsuarioIdUsu": {{ _.usuarioLogadoId }},
+              "fkSubprefeituraIdSubpref": 12
+            }
+      - url: "{{ _.baseUrl }}/regioes/{{ _.regiaoCriadaId }}"
+        name: GET Buscar região por ID
+        meta:
+          id: req_reg_buscar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -800
+          description: "Retorna a região criada. 404 se não existir."
+        method: GET
+      - url: "{{ _.baseUrl }}/regioes/{{ _.regiaoCriadaId }}"
+        name: PUT Atualizar região
+        meta:
+          id: req_reg_atualizar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -700
+          description: "Não dispara análise. dtCadastro omitida é preservada. 404 se id inexistente."
+        method: PUT
+        headers:
+          - name: Content-Type
+            value: application/json
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "nmReg": "Centro - Casa da Ana (atualizada)",
+              "fkUsuarioIdUsu": {{ _.usuarioLogadoId }},
+              "fkSubprefeituraIdSubpref": 12
+            }
+      - url: "{{ _.baseUrl }}/regioes/{{ _.regiaoCriadaId }}/analisar"
+        name: POST Disparar análise manual
+        meta:
+          id: req_reg_analisar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -600
+          description: "Sem body. Pré-requisito: IA_MODO (MOCK default, ou REAL com IA_URL). Comportamento varia com CENARIO_FIXO — ver pasta '8. Roteiro de Demo'. Alimenta alertaCriadoId ($.idAlerta)."
+        method: POST
+      - url: "{{ _.baseUrl }}/usuarios/{{ _.usuarioLogadoId }}/regioes"
+        name: GET Regiões do usuário logado
+        meta:
+          id: req_reg_por_usuario
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -500
+          description: "Lista as regiões do usuário logado."
+        method: GET
+      - url: "{{ _.baseUrl }}/regioes/{{ _.regiaoCriadaId }}"
+        name: DELETE Apagar região
+        meta:
+          id: req_reg_deletar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -400
+          description: "Retorna 204; 404 se id inexistente."
+        method: DELETE
+  - name: 4. Subprefeituras
+    meta:
+      id: fld_subpref
+      created: 1717000000000
+      modified: 1717000000000
+      sortKey: -700
+      description: "Tabela de domínio: 32 subprefeituras de SP. Usada no formulário de cadastro de região."
+    children:
+      - url: "{{ _.baseUrl }}/subprefeituras"
+        name: GET Listar todas as 32
+        meta:
+          id: req_subpref_listar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -1000
+          description: "Lista as 32 subprefeituras (ordenadas por nome)."
+        method: GET
+      - url: "{{ _.baseUrl }}/subprefeituras/12"
+        name: GET Buscar por ID
+        meta:
+          id: req_subpref_buscar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -900
+          description: "Busca a subprefeitura id=12. 404 se não existir."
+        method: GET
+  - name: 5. Alertas
+    meta:
+      id: fld_alertas
+      created: 1717000000000
+      modified: 1717000000000
+      sortKey: -600
+      description: "Histórico de alertas por região."
+    children:
+      - url: "{{ _.baseUrl }}/regioes/{{ _.regiaoCriadaId }}/alertas"
+        name: GET Alertas da região
+        meta:
+          id: req_alerta_listar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -1000
+          description: "Histórico de alertas da região. Ordenado por data desc. Inclui alertas de risco BAIXO."
+        method: GET
+  - name: 6. Notificações
+    meta:
+      id: fld_notif
+      created: 1717000000000
+      modified: 1717000000000
+      sortKey: -500
+      description: "Caixa de entrada do usuário. Notificações só existem para risco MEDIO/ALTO."
+    children:
+      - url: "{{ _.baseUrl }}/usuarios/{{ _.usuarioLogadoId }}/notificacoes"
+        name: GET Todas as notificações
+        meta:
+          id: req_notif_todas
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -1000
+          description: "Todas as notificações do usuário (lidas e não lidas)."
+        method: GET
+      - url: "{{ _.baseUrl }}/usuarios/{{ _.usuarioLogadoId }}/notificacoes/nao-lidas"
+        name: GET Não lidas
+        meta:
+          id: req_notif_nao_lidas
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -900
+          description: "Apenas notificações NAO_LIDA. Útil para o badge de contador."
+        method: GET
+      - url: "{{ _.baseUrl }}/notificacoes/{{ _.notificacaoId }}/marcar-lida"
+        name: PUT Marcar como lida
+        meta:
+          id: req_notif_marcar
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -800
+          description: "Cole um id real (de GET Não lidas) em notificacaoId no Environment. Retorna 200; 404 se id inexistente."
+        method: PUT
+  - name: 7. Casos de Erro
+    meta:
+      id: fld_erros
+      created: 1717000000000
+      modified: 1717000000000
+      sortKey: -400
+      description: "Cada requisição documenta o status HTTP esperado. Formato de erro: { erro: '...' }."
+    children:
+      - url: "{{ _.baseUrl }}/auth/login"
+        name: POST Login senha errada
+        meta:
+          id: req_err_login
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -1000
+          description: "Espera 401 + body { erro: 'E-mail ou senha invalidos.' }"
+        method: POST
+        headers:
+          - name: Content-Type
+            value: application/json
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "emailUsu": "{{ _.emailTeste }}",
+              "senhaUsu": "senhaerrada"
+            }
+      - url: "{{ _.baseUrl }}/auth/cadastro"
+        name: POST Cadastro email duplicado
+        meta:
+          id: req_err_email_dup
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -900
+          description: "Reenvia o mesmo e-mail já cadastrado (idUsu diferente). Espera 409 + body { erro: 'E-mail ja cadastrado.' }"
+        method: POST
+        headers:
+          - name: Content-Type
+            value: application/json
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "idUsu": 101,
+              "nmUsu": "Duplicado",
+              "emailUsu": "{{ _.emailTeste }}",
+              "senhaUsu": "senha123",
+              "tpUsu": "USER",
+              "dtCadastro": "2026-06-04"
+            }
+      - url: "{{ _.baseUrl }}/auth/cadastro"
+        name: POST Cadastro sem nome
+        meta:
+          id: req_err_sem_nome
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -800
+          description: "Body sem nmUsu. Espera 400 (validação no BO)."
+        method: POST
+        headers:
+          - name: Content-Type
+            value: application/json
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "idUsu": 102,
+              "emailUsu": "outro@orbitasafe.com",
+              "senhaUsu": "senha123",
+              "tpUsu": "USER",
+              "dtCadastro": "2026-06-04"
+            }
+      - url: "{{ _.baseUrl }}/usuarios/99999"
+        name: GET Usuário inexistente
+        meta:
+          id: req_err_usu_get
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -700
+          description: "Espera 404 + body { erro: 'Usuario nao encontrado: id=99999' }"
+        method: GET
+      - url: "{{ _.baseUrl }}/usuarios/99999"
+        name: PUT Atualizar usuário inexistente
+        meta:
+          id: req_err_usu_put
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -600
+          description: "Espera 404 (após o fix da Fase 7-1; antes retornava 200/204 silencioso)."
+        method: PUT
+        headers:
+          - name: Content-Type
+            value: application/json
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "nmUsu": "Inexistente",
+              "emailUsu": "inexistente@orbitasafe.com",
+              "tpUsu": "USER"
+            }
+      - url: "{{ _.baseUrl }}/usuarios/99999"
+        name: DELETE Apagar usuário inexistente
+        meta:
+          id: req_err_usu_del
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -500
+          description: "Espera 404 (após o fix da Fase 7-1; antes retornava 204 silencioso)."
+        method: DELETE
+      - url: "{{ _.baseUrl }}/notificacoes/99999/marcar-lida"
+        name: PUT Marcar notificação inexistente
+        meta:
+          id: req_err_notif_put
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -400
+          description: "Espera 404 (corrigido no fix da Fase 6 — atualizar retorna linhas afetadas)."
+        method: PUT
+  - name: 8. Roteiro de Demo
+    meta:
+      id: fld_demo
+      created: 1717000000000
+      modified: 1717000000000
+      sortKey: -300
+      description: "3 variantes da mesma análise para a apresentação. Mesma URL, pré-requisitos de env var diferentes."
+    children:
+      - url: "{{ _.baseUrl }}/regioes/{{ _.regiaoCriadaId }}/analisar"
+        name: Análise — rotação automática
+        meta:
+          id: req_demo_rotacao
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -1000
+          description: "Pré-requisito: API rodando SEM CENARIO_FIXO setada. Rotaciona entre os 6 cenários do banco. Dispare 6× seguidas pra ver BAIXO→ALTO."
+        method: POST
+      - url: "{{ _.baseUrl }}/regioes/{{ _.regiaoCriadaId }}/analisar"
+        name: Análise — cenário ALTO travado
+        meta:
+          id: req_demo_alto
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -900
+          description: "Pré-requisito: subir API com CENARIO_FIXO=5 (Temporal Intenso). Toda análise retorna nivelAlerta=ALTO + gera notificação. Ideal pra demonstrar o caminho ALTO."
+        method: POST
+      - url: "{{ _.baseUrl }}/regioes/{{ _.regiaoCriadaId }}/analisar"
+        name: Análise — cenário BAIXO travado
+        meta:
+          id: req_demo_baixo
+          created: 1717000000000
+          modified: 1717000000000
+          isPrivate: false
+          sortKey: -800
+          description: "Pré-requisito: subir API com CENARIO_FIXO=1 (Tempo Seco Estável). nivelAlerta=BAIXO. IMPORTANTE: alerta é gravado MAS notificação NÃO — confirme com GET Não lidas (count não muda)."
+        method: POST
+environments:
+  name: Local
+  meta:
+    id: env_local
+    created: 1717000000000
+    modified: 1717000000000
+    isPrivate: false
+  data:
+    baseUrl: http://localhost:8080
+    usuarioLogadoId: "{% response 'body', 'req_auth_login', 'b64::JC5pZFVzdQ==::46b', 'never', 60 %}"
+    usuarioLogadoEmail: "{% response 'body', 'req_auth_login', 'b64::JC5lbWFpbFVzdQ==::46b', 'never', 60 %}"
+    regiaoCriadaId: "{% response 'body', 'req_reg_criar', 'b64::JC5pZFJlZw==::46b', 'never', 60 %}"
+    alertaCriadoId: "{% response 'body', 'req_reg_analisar', 'b64::JC5pZEFsZXJ0YQ==::46b', 'never', 60 %}"
+    notificacaoId: ""
+    emailTeste: teste@orbitasafe.com
+    senhaTeste: senha123
+  subEnvironments:
+    - name: Produção
+      meta:
+        id: env_prod
+        created: 1717000000000
+        modified: 1717000000000
+        isPrivate: false
+        sortKey: 0
+      data:
+        baseUrl: ""
