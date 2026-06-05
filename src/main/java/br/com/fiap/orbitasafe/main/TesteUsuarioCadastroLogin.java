@@ -2,6 +2,7 @@ package br.com.fiap.orbitasafe.main;
 
 import br.com.fiap.orbitasafe.bo.UsuarioBo;
 import br.com.fiap.orbitasafe.entities.Usuario;
+import br.com.fiap.orbitasafe.exceptions.CredenciaisInvalidasException;
 
 import java.time.LocalDate;
 
@@ -24,7 +25,11 @@ public class TesteUsuarioCadastroLogin {
         Usuario logado = bo.login("fase4@orbita.com", "senha123");
         System.out.println("Login: " + (logado != null ? "OK — " + logado.getNmUsu() : "FALHOU"));
 
-        Usuario loginErrado = bo.login("fase4@orbita.com", "senhaerrada");
-        System.out.println("Login com senha errada: " + (loginErrado != null ? "OK" : "Recusado (esperado)"));
+        try {
+            bo.login("fase4@orbita.com", "senhaerrada");
+            System.out.println("Login com senha errada: OK (inesperado)");
+        } catch (CredenciaisInvalidasException e) {
+            System.out.println("Login com senha errada: Recusado (esperado)");
+        }
     }
 }
