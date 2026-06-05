@@ -11,9 +11,12 @@ public class CorsFilter implements ContainerResponseFilter {
     @Override
     public void filter(ContainerRequestContext requestContext,
                        ContainerResponseContext responseContext) {
-        // TODO: adicionar URL da Vercel quando front for publicado, ex: "https://orbitasafe.vercel.app"
+        String frontendUrl = System.getenv("FRONTEND_URL");
+        if (frontendUrl == null || frontendUrl.isBlank()) {
+            frontendUrl = "http://localhost:5173";
+        }
         responseContext.getHeaders().add(
-                "Access-Control-Allow-Origin", "http://localhost:5173"
+                "Access-Control-Allow-Origin", frontendUrl
         );
         responseContext.getHeaders().add(
                 "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD"
