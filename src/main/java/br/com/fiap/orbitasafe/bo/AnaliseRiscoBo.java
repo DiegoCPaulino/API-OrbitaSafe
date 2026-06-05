@@ -70,6 +70,9 @@ public class AnaliseRiscoBo {
 
         // Criar e gravar Alerta (sempre, mesmo risco BAIXO)
         // Flask devolve "Baixo"/"Medio"/"Alto"; normaliza para o padrao do banco (BAIXO/MEDIO/ALTO)
+        if (respostaIa == null || respostaIa.getRisco_geral() == null) {
+            throw new RuntimeException("Resposta da IA invalida: risco_geral ausente.");
+        }
         String nivel = respostaIa.getRisco_geral().toUpperCase();
         Alerta alerta = new Alerta();
         alerta.setIdAlerta(idAlerta);
