@@ -1,0 +1,17 @@
+# Saída de build (a imagem builda do zero no estágio Maven)
+target/
+
+# Versionamento e segredos — NUNCA copiar para a imagem
+.git/
+.gitignore
+.env
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Sistema operacional
+.DS_Store
