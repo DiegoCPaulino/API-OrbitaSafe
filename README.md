@@ -168,6 +168,9 @@ JWT, sem BCrypt), **PK manual** nos INSERTs (sem SEQUENCE/TRIGGER) e SQL Oracle 
   Oracle (ORA-02391) num servidor de vida longa.
 - Fonte de clima (`ServicoClima`) e IA (`IaService`) **intercambiáveis** via Factory + env var.
 - `PORT` dinâmico no `application.properties` para deploy em PaaS (Render).
+- **Deploy via Docker** (`Dockerfile` multi-stage na raiz) — o Render não tem runtime nativo de Java;
+  o estágio 1 builda o JAR Quarkus com Maven e o estágio 2 roda só com JRE 21. Fixa a versão do Java
+  na imagem. Detalhes em [`docs/deploy.md`](docs/deploy.md).
 
 **Limitações conhecidas** (assumidas pelo escopo acadêmico):
 
@@ -199,7 +202,7 @@ JWT, sem BCrypt), **PK manual** nos INSERTs (sem SEQUENCE/TRIGGER) e SQL Oracle 
 
 - [`docs/contrato-api.md`](docs/contrato-api.md) — referência completa da API para o front-end.
 - [`docs/contratos-backend-ia.md`](docs/contratos-backend-ia.md) — contrato Java ↔ Flask (Contrato 1).
-- [`docs/deploy.md`](docs/deploy.md) — passo a passo do deploy no Render.
+- [`docs/deploy.md`](docs/deploy.md) — passo a passo do deploy no Render (via Docker).
 - [`docs/insomnia-collection.yaml`](docs/insomnia-collection.yaml) — coleção testável (29 requisições).
 - [`docs/database/script-oracle.sql`](docs/database/script-oracle.sql) — DDL, DML, consultas e relatórios.
 
