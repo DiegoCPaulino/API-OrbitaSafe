@@ -25,7 +25,7 @@ API REST que recebe regiões monitoradas, dispara análise de risco climático (
 **URL base:**
 
 - Local: `http://localhost:8080`
-- Produção: `(placeholder — preencher após deploy da Fase 7)`
+- Produção: https://api-orbitasafe.onrender.com
 
 **Formato:**
 
