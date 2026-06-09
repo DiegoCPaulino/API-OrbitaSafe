@@ -30,10 +30,9 @@ Cinco decisões de maior peso:
 4. Fonte de clima (`ServicoClima`) e IA (`IaService`) atrás de interface + Factory + env var.
 5. Conexão Oracle aberta e fechada por método no DAO (evita vazar sessão em servidor de vida longa).
 
-Três limitações conhecidas (defensáveis):
+Duas limitações conhecidas (defensáveis):
 1. SHA-256 sem salt — vulnerável a rainbow table; em produção real seria BCrypt+salt.
-2. `DELETE /regioes/{id}` de região com alertas resulta em 500 (FK); o caminho esperado é remover dependentes antes.
-3. Sem pool e sob Render Free Tier: 1 instância, hibernação após inatividade (cold start ~30s).
+2. Sem pool e sob Render Free Tier: 1 instância, hibernação após inatividade (cold start ~30s).
 
 Estado atual: API em deploy no Render (modo JVM), rodando no default `IA_MODO=MOCK` + `FONTE_CLIMA=SIMULADO` — fluxo completo funciona sem a Flask. A Flask de IA e o front (Vercel) são projetos separados; a Flask ainda não está publicada (por isso o default MOCK). Localmente, o pipeline inteiro roda offline contra o Oracle da FIAP.
 
@@ -215,7 +214,7 @@ Convenção: nomes de atributo espelham as colunas (idUsu↔id_usu). `LocalDate`
 | Classe | Métodos públicos | Particularidade |
 |---|---|---|
 | `UsuarioDao` | inserir, atualizar, deletar, selecionar, buscarPorId, buscarPorEmail | CRUD completo + busca por email (login/unicidade); deletar simples (sem cascade) |
-| `RegiaoDao` | inserir, atualizar, deletar, selecionar, buscarPorId, selecionarPorUsuario | CRUD completo + filtro por usuário; PK manual no insert (`:20`); deletar simples |
+| `RegiaoDao` | inserir, atualizar, deletar, selecionar, buscarPorId, selecionarPorUsuario | CRUD completo + filtro por usuário; PK manual no insert (`:20`); deletar com cascade transacional (5 statements em setAutoCommit/commit) |
 | `SubprefeituraDao` | selecionar, buscarPorId | só leitura (tabela de domínio) |
 | `LeituraClimaticaDao` | inserir, buscarPorId, selecionarPorRegiao | escrita pelo pipeline; sem update/delete (não há endpoint) |
 | `AlertaDao` | inserir, buscarPorId, selecionarPorRegiao | escrita pelo pipeline; leitura no histórico (`GET /regioes/{id}/alertas`) |
@@ -315,7 +314,7 @@ Não são testes JUnit — são `main`s de verificação manual com `System.out`
 - `tb_alerta` 1:N `tb_notificacao` (FK `notif_alerta_fk`, `:138`).
 - `tb_usuario` 1:N `tb_notificacao` (FK `notif_usu_fk`, `:136`).
 
-Nenhuma FK tem ON DELETE CASCADE — daí o DELETE de uma região com alertas falhar por constraint (Q&A 9).
+Nenhuma FK tem ON DELETE CASCADE — por isso o DELETE de uma região aplica cascade transacional sobre os registros dependentes antes de removê-la (ver Q&A 9).
 
 ### 6.3 Estratégia de PK (sem SEQUENCE)
 
@@ -376,8 +375,8 @@ R. O Contrato 1 são 8 chaves planas e o Gson serializa o Map direto para o JSON
 P8. Por que sem transação explícita no fluxo de análise?
 R. `setAutoCommit`/transação não está no padrão das aulas — fora do escopo. Cada INSERT do pipeline (leitura, alerta, associações, notificação) comita por conta própria. Limitação assumida: uma falha no meio deixa estado parcial (ex. leitura gravada sem alerta). No escopo de demo isso não ocorre porque o caminho default (MOCK) não falha. Em produção real, envolveria o passo 4-10 numa transação única.
 
-P9. Por que DELETE /regioes/{id} dá 500 quando a região tem alertas?
-R. Decisão consciente: o `RegiaoDao.deletar` (`:54-68`) faz um DELETE simples, sem cascade. Como nenhuma FK tem ON DELETE CASCADE (Seção 6.2), apagar uma região que já tem leituras/alertas viola a constraint e o Oracle retorna erro → o ExceptionMapper devolve 500. O caminho esperado é remover dependentes antes. Mantive o DAO no padrão simples das aulas (cheguei a ter uma versão com cascade transacional, mas reverti por usar `setAutoCommit`, fora do escopo — ver P8). Documentado como limitação no `README.md` Seção 8.
+P9. Por que DELETE /regioes/{id} faz cascade transacional em vez de um DELETE simples?
+R. Originalmente, a opção foi manter o padrão didático das aulas (DELETE simples, sem CASCADE). Em testes de integração com o front-end ficou claro que esta decisão jogaria responsabilidade indevida para a camada de apresentação — o front-end não deveria conhecer dependências de chave estrangeira. O `RegiaoDao.deletar` foi reescrito para fazer cascade manual na ordem correta (alerta_modelo → notificacao → alerta → leitura → regiao), envolto em `setAutoCommit(false)` com commit/rollback. A transação garante atomicidade: se qualquer passo falhar, o rollback é acionado e o banco não fica em estado inconsistente. Esta é uma extensão consciente do padrão das aulas, justificada pela natureza composta da operação.
 
 P10. Por que duas fontes de clima (Open-Meteo + Simulado)?
 R. Garantir demonstração confiável sem depender de rede. `ClimaOpenMeteo` é a fonte real (produção); `ClimaSimulado` lê cenários do banco e permite travar um cenário específico (`CENARIO_FIXO`) para a banca. A troca é por env var via `ServicoClimaFactory` (`:8-14`), sem recompilar. Interface `ServicoClima` mantém o resto do código alheio à fonte.

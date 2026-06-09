@@ -177,8 +177,6 @@ JWT, sem BCrypt), **PK manual** nos INSERTs (sem SEQUENCE/TRIGGER) e SQL Oracle 
 - SHA-256 **sem salt** — vulnerável a rainbow table; em produção real seria BCrypt + salt.
 - Autenticação **stateless** sem JWT — o front guarda o id do usuário para simular a sessão.
 - **Sem transação explícita** no fluxo de análise (fora do escopo das aulas).
-- `DELETE /regioes/{id}` de uma região **com alertas** resulta em erro de FK (ORA): o caminho
-  esperado é remover os dependentes antes. Decisão consciente para manter o DAO no padrão simples.
 
 ---
 
