@@ -53,16 +53,66 @@ public class RegiaoDao {
 
     public int deletar(int id) throws SQLException, ClassNotFoundException {
         Connection conexao = new ConexaoFactory().conexao();
-        PreparedStatement stmt = null;
+        PreparedStatement stmtAlertaModelo = null;
+        PreparedStatement stmtNotif = null;
+        PreparedStatement stmtAlerta = null;
+        PreparedStatement stmtLeitura = null;
+        PreparedStatement stmtRegiao = null;
         try {
-            stmt = conexao.prepareStatement(
+            conexao.setAutoCommit(false);
+
+            // 1. Apaga associacoes alerta-modelo dos alertas desta regiao
+            stmtAlertaModelo = conexao.prepareStatement(
+                "delete from tb_alerta_modelo where fk_alerta_id_alerta in " +
+                "(select id_alerta from tb_alerta where fk_regiao_id_reg = ?)"
+            );
+            stmtAlertaModelo.setInt(1, id);
+            stmtAlertaModelo.executeUpdate();
+
+            // 2. Apaga notificacoes vinculadas aos alertas desta regiao
+            stmtNotif = conexao.prepareStatement(
+                "delete from tb_notificacao where fk_alerta_id_alerta in " +
+                "(select id_alerta from tb_alerta where fk_regiao_id_reg = ?)"
+            );
+            stmtNotif.setInt(1, id);
+            stmtNotif.executeUpdate();
+
+            // 3. Apaga alertas da regiao
+            stmtAlerta = conexao.prepareStatement(
+                "delete from tb_alerta where fk_regiao_id_reg = ?"
+            );
+            stmtAlerta.setInt(1, id);
+            stmtAlerta.executeUpdate();
+
+            // 4. Apaga leituras climaticas da regiao
+            stmtLeitura = conexao.prepareStatement(
+                "delete from tb_leitura_climatica where fk_regiao_id_reg = ?"
+            );
+            stmtLeitura.setInt(1, id);
+            stmtLeitura.executeUpdate();
+
+            // 5. Apaga a regiao
+            stmtRegiao = conexao.prepareStatement(
                 "delete from tb_regiao where id_reg = ?"
             );
-            stmt.setInt(1, id);
-            int linhasAfetadas = stmt.executeUpdate();
+            stmtRegiao.setInt(1, id);
+            int linhasAfetadas = stmtRegiao.executeUpdate();
+
+            conexao.commit();
             return linhasAfetadas;
+        } catch (SQLException e) {
+            try {
+                conexao.rollback();
+            } catch (SQLException rollbackErr) {
+                rollbackErr.printStackTrace();
+            }
+            throw e;
         } finally {
-            if (stmt != null) stmt.close();
+            if (stmtAlertaModelo != null) stmtAlertaModelo.close();
+            if (stmtNotif != null) stmtNotif.close();
+            if (stmtAlerta != null) stmtAlerta.close();
+            if (stmtLeitura != null) stmtLeitura.close();
+            if (stmtRegiao != null) stmtRegiao.close();
             conexao.close();
         }
     }
