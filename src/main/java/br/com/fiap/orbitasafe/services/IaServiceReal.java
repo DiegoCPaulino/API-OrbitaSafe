@@ -25,7 +25,7 @@ public class IaServiceReal implements IaService {
         }
 
         Gson gson = new Gson();
-        // Contrato 1 — Map serializado direto; ajustar chaves em AnaliseRiscoBo quando o formato fechar.
+        // Contrato 1 — o Map de 8 chaves (montado em AnaliseRiscoBo) e serializado direto no JSON esperado pela Flask.
         String json = gson.toJson(variaveis);
 
         HttpPost request = new HttpPost(iaUrl);
